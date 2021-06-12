@@ -12,6 +12,9 @@ class VnExpress(scrapy.Spider):
         khoa-hoc,
         giao-duc,
         du-lich,
+        kinh-doanh,
+        phap-luat,
+        suc-khoe,
         .....
     ]
     '''
@@ -63,7 +66,8 @@ class VnExpress(scrapy.Spider):
             'title': title,
             'description': description,
             'link': response.url,
-            'content': content
+            'content': content,
+            'label': 'Suc Khoe'
         }
 
         return jsonData
@@ -79,10 +83,30 @@ class VnExpress(scrapy.Spider):
 
     def extract_content(self, response):
         content = response.css("section article p::text").getall()
+        if not content:
+            content = response.css("section p::text").getall()
+        if not content or len(content)<5:
+            content = response.css("section img::attr(src)").getall()
         return content
 
     def extract_date(self, response):
-        return response.css("section span.date::text").extract_first()
+        out = response.css("section span.date::text").extract_first()
+        if not out:
+            out = response.css("section span.time.right::text").extract_first()
+        if not out:
+            out = response.css("span.date::text").extract_first()
+        return out
     
     def extract_author(self, response):
-        return response.css("section article p.Normal strong::text").extract_first()
+        out = response.css("section article p.Normal strong::text").extract_first()
+        if not out:
+            out = response.css("section article p.Normal em::text").extract_first()
+        if not out:
+            out = response.css("section article p.author_mail strong::text").extract_first()
+        if not out:
+            out = response.css("section article p strong::text").extract_first()
+        if not out:
+            out = response.css("section p strong::text").extract_first()
+        if not out:
+            out = response.css("section b::text").getall()[-1]
+        return out
